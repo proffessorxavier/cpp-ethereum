@@ -82,6 +82,7 @@ std::set<eth::Network> const& getNetworks();
 /// >Homestead to EIP150, EIP158, Byzantium, ...
 /// <=Homestead to Frontier, Homestead
 std::set<std::string> translateNetworks(std::set<std::string> const& _networks);
+std::string prepareGenesisConfig(eth::Network _net);
 u256 toInt(json_spirit::mValue const& _v);
 
 /// Parses a JSON value as an 64-bit signed integer.

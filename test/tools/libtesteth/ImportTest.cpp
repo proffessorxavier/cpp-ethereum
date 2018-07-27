@@ -95,7 +95,7 @@ void ImportTest::makeBlockchainTestFromStateTest(set<eth::Network> const& _netwo
             trDup.netId = net;
 
             // Calculate the block reward
-            ChainParams const chainParams{genesisInfo(net)};
+            ChainParams const chainParams{TestBlockChain::prepareGenesisConfig(net, TestBlockChain::MiningType::NoProof)};
             EVMSchedule const schedule = chainParams.scheduleForBlockNumber(1);
             u256 const blockReward = chainParams.blockReward(schedule);
 
@@ -149,6 +149,7 @@ void ImportTest::makeBlockchainTestFromStateTest(set<eth::Network> const& _netwo
         blocksObj["uncleHeaders"] = json_spirit::mArray();
         blocksArr.push_back(blocksObj);
         testObj["blocks"] = blocksArr;
+        testObj["sealEngine"] = eth::NoProof::name();
         json[testname] = testObj;
 
         // Write a filler file to the filler folder

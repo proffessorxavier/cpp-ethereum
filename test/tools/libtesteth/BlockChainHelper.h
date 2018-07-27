@@ -137,10 +137,19 @@ private:
 class TestBlockChain
 {
 public:
-    TestBlockChain() : TestBlockChain(defaultGenesisBlock()) {}
-    TestBlockChain(TestBlock const& _genesisBlock);
+    enum MiningType
+    {
+        Ethash,
+        NoProof
+    };
+    TestBlockChain() : TestBlockChain(defaultGenesisBlock(), MiningType::Ethash) {}
+    TestBlockChain(TestBlock const& _genesisBlock, MiningType _mining = MiningType::Ethash);
 
-    void reset(TestBlock const& _genesisBlock);
+    // Replace sealEngine depending on a MiningType"
+    // Genesis config is parsed from _net in libethashseal/GenesisInfo.cpp
+    static std::string prepareGenesisConfig(eth::Network _net, MiningType _mining);
+
+    void reset(TestBlock const& _genesisBlock, MiningType _mining);
     bool addBlock(TestBlock const& _block);
     vector<TestBlock> syncUncles(vector<TestBlock> const& _uncles);
     TestBlock const& topBlock() { return m_lastBlock; }

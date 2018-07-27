@@ -28,6 +28,9 @@
 #include <libethereum/ValidationSchemes.h>
 #include <test/tools/libtesteth/BlockChainHelper.h>
 #include <test/tools/libtesteth/TestHelper.h>
+#include <libethashseal/Ethash.h>
+#include <libethcore/SealEngine.h>
+
 using namespace std;
 using namespace json_spirit;
 using namespace dev;
@@ -487,16 +490,31 @@ void TestBlock::populateFrom(TestBlock const& _original)
     m_dirty = false;
 }
 
-TestBlockChain::TestBlockChain(TestBlock const& _genesisBlock)
+TestBlockChain::TestBlockChain(TestBlock const& _genesisBlock, MiningType _mining)
 {
-    reset(_genesisBlock);
+    reset(_genesisBlock, _mining);
 }
 
-void TestBlockChain::reset(TestBlock const& _genesisBlock)
+string TestBlockChain::prepareGenesisConfig(eth::Network _net, MiningType _mining)
+{
+    // replace Ethash with NoProof and NoProof with Ethash dynamically
+    // this function is here so not to create more networks and configs in libethashseal
+    string config = genesisInfo(_net);
+    size_t posEthash = config.find(eth::Ethash::name());
+    size_t posNoProof = config.find(eth::NoProof::name());
+
+    if (_mining == MiningType::NoProof && posEthash != string::npos)
+        return config.replace(posEthash, eth::Ethash::name().length(), eth::NoProof::name());
+    if (_mining == MiningType::Ethash && posNoProof != string::npos)
+        return config.replace(posNoProof, eth::NoProof::name().length(), eth::Ethash::name());
+    return config;
+}
+
+void TestBlockChain::reset(TestBlock const& _genesisBlock, MiningType _mining)
 {
     m_tempDirBlockchain.reset(new TransientDirectory);
-    ChainParams p = ChainParams(genesisInfo(TestBlockChain::s_sealEngineNetwork),
-        _genesisBlock.bytes(), _genesisBlock.accountMap());
+    string genesisConfig = TestBlockChain::prepareGenesisConfig(TestBlockChain::s_sealEngineNetwork, _mining);
+    ChainParams p = ChainParams(genesisConfig, _genesisBlock.bytes(), _genesisBlock.accountMap());
 
     m_blockChain.reset(new BlockChain(p, m_tempDirBlockchain.get()->path(), WithExisting::Kill));
     if (!m_blockChain->isKnown(BlockHeader::headerHashFromBlock(_genesisBlock.bytes())))
